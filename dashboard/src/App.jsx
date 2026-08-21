@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
@@ -6,6 +6,37 @@ import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
+  const [liveEquity, setLiveEquity] = useState("Loading live balance...")
+  const [accountStatus, setAccountStatus] = useState("CONNECTING...")
+
+  // Fetch real Alpaca paper account data on load
+  useEffect(() => {
+    async function getAlpacaData() {
+      const key = import.meta.env.VITE_ALPACA_API_KEY
+      const secret = import.meta.env.VITE_ALPACA_SECRET_KEY
+
+      if (!key || !secret) {
+        setLiveEquity("Error: .env keys missing")
+        return
+      }
+
+      try {
+        const res = await fetch("https://paper-api.alpaca.markets/v2/account", {
+          headers: {
+            "APCA-API-KEY-ID": key,
+            "APCA-API-SECRET-KEY": secret
+          }
+        })
+        const data = await res.json()
+        setLiveEquity(`$${parseFloat(data.equity).toLocaleString()}`)
+        setAccountStatus(data.status)
+      } catch (err) {
+        setLiveEquity("Failed to fetch balance")
+        setAccountStatus("ERROR")
+      }
+    }
+    getAlpacaData()
+  }, [])
 
   return (
     <>
@@ -16,7 +47,11 @@ function App() {
           <img src={viteLogo} className="vite" alt="Vite logo" />
         </div>
         <div>
-          <h1>Get started</h1>
+          <h1>Apex Cypher</h1>
+          {/* LIVE ALPACA DATA INSERTED HERE */}
+          <p className="mb-4 text-green-400 font-mono">
+            Live Paper Equity: <strong>{liveEquity}</strong> | Status: <strong>{accountStatus}</strong>
+          </p>
           <p>
             Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
           </p>
